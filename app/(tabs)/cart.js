@@ -6,6 +6,8 @@ export default function Cart() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
   const serverIP = "192.168.1.6";
+  const [selectedProductIds, setSelectedProductIds] = useState([]); // Track selected product IDs
+  const [selectAll, setSelectAll] = useState(false); // Track "All" button state
 
   useEffect(() => {
     const fetchCartItems = async () => {
@@ -21,7 +23,12 @@ export default function Cart() {
         const data = await response.json();
 
         if (Array.isArray(data.data)) {
-          setCartItems(data.data);
+          // Ensure each item has a valid quantity
+          const itemsWithQuantity = data.data.map((item) => ({
+            ...item,
+            quantity: item.quantity || 1, // Default to 1 if quantity is missing or invalid
+          }));
+          setCartItems(itemsWithQuantity);
         } else {
           console.error("Invalid cart data format:", data);
         }
@@ -36,26 +43,94 @@ export default function Cart() {
     fetchCartItems();
   }, []);
 
-  const handleQuantityChange = (itemId, action) => {
+  // Function to handle quantity increase for a specific product
+  const handleIncreaseQuantity = (itemId) => {
     setCartItems((prevItems) =>
-      prevItems.map((item) =>
-        item.id === itemId
-          ? {
-              ...item,
-              quantity: action === "increase" ? item.quantity + 1 : item.quantity - 1,
-            }
-          : item
-      )
+      prevItems.map((item) => {
+        if (item.id === itemId) {
+          return { ...item, quantity: item.quantity + 1 };
+        }
+        return item;
+      })
     );
+  };
+
+  // Function to handle quantity decrease for a specific product
+  const handleDecreaseQuantity = (itemId) => {
+    setCartItems((prevItems) =>
+      prevItems.map((item) => {
+        if (item.id === itemId) {
+          return { ...item, quantity: Math.max(1, item.quantity - 1) };
+        }
+        return item;
+      })
+    );
+  };
+
+  // Function to handle product selection
+  const handleProductSelect = (productId) => {
+    setSelectedProductIds((prevSelected) => {
+      if (prevSelected.includes(productId)) {
+        // Deselect the product
+        return prevSelected.filter((id) => id !== productId);
+      } else {
+        // Select the product
+        return [...prevSelected, productId];
+      }
+    });
+  };
+
+  // Function to handle "Select All" toggle
+  const handleSelectAll = () => {
+    if (selectAll) {
+      // Deselect all products
+      setSelectedProductIds([]);
+    } else {
+      // Select all products
+      setSelectedProductIds(cartItems.map((item) => item.id));
+    }
+    setSelectAll(!selectAll);
+  };
+
+  // Function to add a product to the cart
+  const addProductToCart = (newProduct) => {
+    setCartItems((prevItems) => {
+      const existingProduct = prevItems.find((item) => item.id === newProduct.id);
+      if (existingProduct) {
+        // If the product already exists, update its quantity
+        return prevItems.map((item) =>
+          item.id === newProduct.id
+            ? { ...item, quantity: item.quantity + newProduct.quantity }
+            : item
+        );
+      } else {
+        // If the product doesn't exist, add it to the cart
+        return [...prevItems, newProduct];
+      }
+    });
   };
 
   const renderCartItem = ({ item }) => (
     <View style={styles.cartItem}>
+      {/* Radio Button for Selecting Product */}
+      <TouchableOpacity
+        style={[
+          styles.radioButton,
+          selectedProductIds.includes(item.id) && styles.radioButtonSelected,
+        ]}
+        onPress={() => handleProductSelect(item.id)}
+      >
+        {selectedProductIds.includes(item.id) && <View style={styles.radioButtonInner} />}
+      </TouchableOpacity>
+
+      {/* Product Image */}
       <Image
         source={{ uri: `http://${serverIP}/Pharmacy/ACAAPharmacy/uploads/${item.product_image || 'default.png'}` }}
         style={styles.productImage}
         onError={(e) => { e.target.src = `http://${serverIP}/Pharmacy/ACAAPharmacy/uploads/default.png`; }}
       />
+
+      {/* Product Info */}
       <View style={styles.productInfo}>
         <Text style={styles.productName}>{item.product_name || 'Product Name'}</Text>
         <Text style={styles.productDetails}>{item.product_details || 'No Details'}</Text>
@@ -63,18 +138,19 @@ export default function Cart() {
         <Text style={styles.productPrice}>₱{item.product_price || '0.00'}</Text>
       </View>
 
+      {/* Quantity Controls */}
       <View style={styles.quantityContainer}>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => handleQuantityChange(item.id, "decrease")}
+          onPress={() => handleDecreaseQuantity(item.id)}
           disabled={item.quantity <= 1}
         >
           <Text style={styles.buttonText}>-</Text>
         </TouchableOpacity>
-        <Text style={styles.quantityText}>{item.quantity || 1}</Text>
+        <Text style={styles.quantityText}>{item.quantity}</Text>
         <TouchableOpacity
           style={styles.button}
-          onPress={() => handleQuantityChange(item.id, "increase")}
+          onPress={() => handleIncreaseQuantity(item.id)}
         >
           <Text style={styles.buttonText}>+</Text>
         </TouchableOpacity>
@@ -89,11 +165,34 @@ export default function Cart() {
       ) : cartItems.length === 0 ? (
         <Text style={styles.emptyCartText}>Your cart is empty.</Text>
       ) : (
-        <FlatList
-          data={cartItems}
-          keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
-          renderItem={renderCartItem}
-        />
+        <>
+          <FlatList
+            data={cartItems}
+            keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
+            renderItem={renderCartItem}
+          />
+          {/* Rectangle box at the bottom */}
+          <View style={styles.bottomContainer}>
+            <View style={styles.radioButtonContainer}>
+              <TouchableOpacity
+                style={[styles.radioButton, selectAll && styles.radioButtonSelected]}
+                onPress={handleSelectAll}
+              >
+                {selectAll && <View style={styles.radioButtonInner} />}
+              </TouchableOpacity>
+              <Text style={styles.radioText}>All</Text>
+            </View>
+            <View style={styles.totalContainer}>
+              <Text style={styles.totalText}>
+                Total: ₱
+                {cartItems.reduce((total, item) => total + item.quantity * item.product_price, 0).toFixed(2)}
+              </Text>
+              <TouchableOpacity style={styles.checkoutButton}>
+                <Text style={styles.checkoutButtonText}>Checkout</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </>
       )}
     </View>
   );
@@ -128,8 +227,6 @@ const styles = StyleSheet.create({
     right: 10,
     backgroundColor: "#f4f4f4",
     borderRadius: 5,
-    // paddingHorizontal: 10,
-    // paddingVertical: 5,
   },
   button: {
     backgroundColor: "transparent",
@@ -139,11 +236,49 @@ const styles = StyleSheet.create({
   },
   buttonText: {
     color: "#000",
-    fontSize: 16,
+    fontSize: 18,
   },
   quantityText: {
     fontSize: 12,
     fontWeight: "bold",
-    color: "#007bff",
+    color: "#000",
+  },
+  bottomContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
+    padding: 10,
+    backgroundColor: "#ffc928",
+    borderTopWidth: 1,
+    borderTopColor: "#ddd",
+    borderRadius: 10,
+    marginBottom: 65, // Adjust for the tab bar
+  },
+  radioButtonContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  radioButton: {
+    height: 20,
+    width: 20,
+    borderWidth: 1,
+    borderColor: "#000",
+    alignItems: "center",
+    justifyContent: "center",
+    borderRadius: 3,
+    marginRight: 5,
+  },
+  radioText: {
+    fontSize: 16,
+    color: "#000",
+  },
+  radioButtonSelected: {
+    borderColor: "#007bff",
+  },
+  radioButtonInner: {
+    height: 10,
+    width: 10,
+    backgroundColor: "#007bff",
+    borderRadius: 5,
   },
 });

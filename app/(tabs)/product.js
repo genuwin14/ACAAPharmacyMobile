@@ -39,30 +39,38 @@ export default function ProductList() {
       });
   }, []);
 
-  // ✅ Function to Add to Cart
   const addToCart = async (inventory_id) => {
     if (!userID) {
       Alert.alert("Error", "You must be logged in to add items to the cart.");
       return;
     }
-
+  
     const cartItem = {
       user_id: userID, // ✅ Uses the stored user ID
       inventory_id: inventory_id,
+      quantity: 1, // Default quantity to add
       status: "Cart",
     };
-
+  
     try {
       const response = await fetch(`http://${serverIP}/Pharmacy/ACAAPharmacy/api/cart`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(cartItem),
       });
-
+  
       const data = await response.json();
-
+  
       if (response.ok) {
-        Alert.alert("Success", "Product added to cart!");
+        if (data.data && data.data.id) {
+          Alert.alert(
+            "Success",
+            `Product added to cart! Quantity: ${data.data.quantity}`
+          );
+        } else {
+          console.error("Error: Missing 'id' in response data:", data);
+          Alert.alert("Error", "Unexpected response from the server.");
+        }
       } else {
         Alert.alert("Error", data.message || "Failed to add to cart.");
       }
