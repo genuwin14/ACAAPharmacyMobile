@@ -9,22 +9,23 @@ export default function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userID, setUserID] = useState(null); // ✅ Store logged-in user ID
-  const serverIP = "192.168.1.6";
+  // const serverIP = "192.168.1.6";
+  const serverIP = "172.16.238.123";
 
   useEffect(() => {
-    // ✅ Fetch logged-in user ID
     const getUserID = async () => {
       try {
         const userData = await AsyncStorage.getItem("loggedInUser");
         if (userData) {
           const user = JSON.parse(userData);
-          setUserID(user.id); // ✅ Set user ID
+          console.log("Logged-in User ID:", user.id); // Debugging log
+          setUserID(user.id);
         }
       } catch (error) {
         console.error("Error fetching user ID:", error);
       }
     };
-
+  
     getUserID();
 
     fetch(`http://${serverIP}/Pharmacy/ACAAPharmacy/api/products`)
@@ -40,44 +41,40 @@ export default function ProductList() {
   }, []);
 
   const addToCart = async (inventory_id) => {
-    if (!userID) {
-      Alert.alert("Error", "You must be logged in to add items to the cart.");
-      return;
-    }
-  
-    const cartItem = {
-      user_id: userID, // ✅ Uses the stored user ID
-      inventory_id: inventory_id,
-      quantity: 1, // Default quantity to add
-      status: "Cart",
-    };
-  
-    try {
-      const response = await fetch(`http://${serverIP}/Pharmacy/ACAAPharmacy/api/cart`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(cartItem),
-      });
-  
-      const data = await response.json();
-  
-      if (response.ok) {
-        if (data.data && data.data.id) {
-          Alert.alert(
-            "Success",
-            `Product added to cart! Quantity: ${data.data.quantity}`
-          );
-        } else {
-          console.error("Error: Missing 'id' in response data:", data);
-          Alert.alert("Error", "Unexpected response from the server.");
-        }
-      } else {
-        Alert.alert("Error", data.message || "Failed to add to cart.");
+      try {
+          if (!userID) {
+              Alert.alert("Error", "You must be logged in to add items to the cart.");
+              return;
+          }
+
+          const cartItem = {
+              user_id: userID,
+              inventory_id: inventory_id
+          };
+
+          console.log("Cart Item Payload:", JSON.stringify(cartItem));
+
+          const response = await fetch(`http://${serverIP}/Pharmacy/ACAAPharmacy/api/cart`, {
+              method: "POST",
+              headers: {
+                  "Content-Type": "application/json", // ✅ Ensure JSON content type
+                  "Accept": "application/json"
+              },
+              body: JSON.stringify(cartItem) // ✅ Convert to JSON string
+          });
+
+          const data = await response.json();
+          console.log("API Response:", data);
+
+          if (response.ok && data.success) {
+              Alert.alert("Success", data.message || "Product added to cart successfully.");
+          } else {
+              Alert.alert("Error", data.message || "Failed to add to cart.");
+          }
+      } catch (error) {
+          console.error("Error adding to cart:", error);
+          Alert.alert("Error", "Could not add product to cart.");
       }
-    } catch (error) {
-      console.error("Error adding to cart:", error);
-      Alert.alert("Error", "Could not add product to cart.");
-    }
   };
 
   const renderProduct = ({ item }) => (
@@ -94,7 +91,7 @@ export default function ProductList() {
       <Text style={styles.productPrice}>₱{item.price}</Text>
       <TouchableOpacity 
         style={styles.cartIconContainer} 
-        onPress={() => addToCart(item.id)}
+        onPress={() => addToCart(item.id)} // Pass the product ID
       >
         <Image 
           source={{ uri: "https://cdn-icons-png.flaticon.com/512/1170/1170678.png" }} 

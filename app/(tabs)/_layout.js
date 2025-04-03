@@ -1,8 +1,18 @@
 import { Tabs } from "expo-router";
 import { View, Text, TouchableOpacity, Platform } from "react-native";
 import { Ionicons } from "@expo/vector-icons"; // ✅ Import Ionicons
+import { useFocusEffect } from "@react-navigation/native"; // ✅ Import useFocusEffect
+import { useCallback } from "react";
 
 export default function TabLayout() {
+  useFocusEffect(
+    useCallback(() => {
+      // Refresh logic here
+      console.log("Tab layout refreshed!");
+      // Add any additional logic to refresh data or state
+    }, [])
+  );
+
   return (
     <Tabs
       screenOptions={({ route }) => ({
@@ -12,8 +22,6 @@ export default function TabLayout() {
           shadowOpacity: 0.1,
           shadowOffset: { width: 0, height: 2 },
           shadowRadius: 4,
-          // borderBottomLeftRadius: 30,
-          // borderBottomRightRadius: 30,
           elevation: 8,
         },
         headerTitle: () => (
@@ -30,7 +38,7 @@ export default function TabLayout() {
           position: "absolute",
           height: 70,
           paddingTop: 5,
-          backgroundColor: "#fff", // ✅ Background is white
+          backgroundColor: "#fff",
           borderTopWidth: 0,
           shadowColor: "#000",
           shadowOffset: { width: 0, height: -2 },
@@ -39,14 +47,14 @@ export default function TabLayout() {
           elevation: 5,
           paddingBottom: Platform.OS === "ios" ? 20 : 10,
         },
-        tabBarActiveTintColor: "#ffc928", // ✅ Active icon color
+        tabBarActiveTintColor: "#ffc928",
       })}
     >
       <Tabs.Screen
         name="home"
         options={{
           tabBarIcon: ({ color }) => (
-            <Ionicons name="home" size={28} color={color} /> // ✅ Home icon
+            <Ionicons name="home" size={28} color={color} />
           ),
         }}
       />
@@ -54,7 +62,7 @@ export default function TabLayout() {
         name="product"
         options={{
           tabBarIcon: ({ color }) => (
-            <Ionicons name="grid" size={28} color={color} /> // ✅ Category icon
+            <Ionicons name="grid" size={28} color={color} />
           ),
         }}
       />
@@ -62,7 +70,7 @@ export default function TabLayout() {
         name="cart"
         options={{
           tabBarIcon: ({ color }) => (
-            <Ionicons name="cart" size={28} color={color} /> // ✅ Cart icon
+            <Ionicons name="cart" size={28} color={color} />
           ),
         }}
       />
@@ -70,7 +78,7 @@ export default function TabLayout() {
         name="profile"
         options={{
           tabBarIcon: ({ color }) => (
-            <Ionicons name="person-circle" size={28} color={color} /> // ✅ Profile icon
+            <Ionicons name="person-circle" size={28} color={color} />
           ),
         }}
       />

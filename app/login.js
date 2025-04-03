@@ -19,7 +19,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      const response = await fetch("http://192.168.1.6/Pharmacy/ACAAPharmacy/api/users");
+      // const response = await fetch("http://192.168.1.6/Pharmacy/ACAAPharmacy/api/users");
+      const response = await fetch("http://172.16.238.123/Pharmacy/ACAAPharmacy/api/users");
       const users = await response.json();
 
       if (!Array.isArray(users)) {
