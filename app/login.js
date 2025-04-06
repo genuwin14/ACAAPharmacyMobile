@@ -19,8 +19,8 @@ export default function Login() {
     setLoading(true);
 
     try {
-      // const response = await fetch("http://192.168.1.6/Pharmacy/ACAAPharmacy/api/users");
-      const response = await fetch("http://172.16.238.123/Pharmacy/ACAAPharmacy/api/users");
+      const response = await fetch("http://192.168.1.6/Pharmacy/ACAAPharmacy/api/users");
+      // const response = await fetch("http://172.16.238.123/Pharmacy/ACAAPharmacy/api/users");
       const users = await response.json();
 
       if (!Array.isArray(users)) {
@@ -32,7 +32,7 @@ export default function Login() {
       if (user) {
         await AsyncStorage.setItem("loggedInUser", JSON.stringify(user)); // ✅ Save user data
         Alert.alert("Success", "Login successful!");
-        router.replace("/profile"); // ✅ Redirect to profile page
+        router.replace("/home"); // ✅ Redirect to profile page
       } else {
         Alert.alert("Error", "Invalid username or password.");
       }

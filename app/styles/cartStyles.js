@@ -2,6 +2,23 @@ import { StyleSheet } from "react-native";
 
 const cartStyles = StyleSheet.create({
   container: { flex: 1, padding: 20, backgroundColor: "#f4f4f4" },
+  iconContainer: {
+    alignItems: 'left',
+    marginBottom: 20, // Space between the icon and the FlatList
+  },
+  
+  receivingText: {
+    fontSize: 12, // Adjust the size of the text
+    color: "#000", // Color of the text
+    marginTop: 2,  // Space between the icon and the text
+    fontWeight: "bold", // Bold text for emphasis
+  },
+  hrLine: {
+    borderBottomColor: '#ccc',
+    borderBottomWidth: 1,
+    marginTop: 10,
+    marginBottom: 10,
+  },
   emptyCartText: { fontSize: 18, textAlign: "center", color: "#777" },
   cartItem: {
     flexDirection: "row",
@@ -93,6 +110,31 @@ const cartStyles = StyleSheet.create({
     width: 20,
     height: 20,
     tintColor: "#ff0000", // Red color for the trash icon
+  },
+  totalContainer: {
+    flexDirection: "row",
+    alignItems: "center",
+  },
+  totalText: {
+    fontSize: 14,
+    fontWeight: "bold",
+    color: "#000",
+  },
+  // separator: {
+  //   marginHorizontal: 10,
+  //   fontSize: 18,
+  //   color: "#000",
+  // },
+  checkoutButton: {
+    backgroundColor: "#007bff",
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 15,
+  },
+  checkoutButtonText: {
+    color: "#fff",
+    fontSize: 14,
+    fontWeight: "bold",
   },
 });
 

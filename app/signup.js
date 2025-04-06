@@ -19,8 +19,8 @@ export default function Signup() {
     setLoading(true);
 
     try {
-      // const response = await fetch("http://192.168.1.6/Pharmacy/ACAAPharmacy/api/users/add", {
-      const response = await fetch("http://172.16.238.123/Pharmacy/ACAAPharmacy/api/users/add", {
+      const response = await fetch("http://192.168.1.6/Pharmacy/ACAAPharmacy/api/users/add", {
+      // const response = await fetch("http://172.16.238.123/Pharmacy/ACAAPharmacy/api/users/add", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",

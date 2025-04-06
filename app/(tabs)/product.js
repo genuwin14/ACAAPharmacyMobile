@@ -9,8 +9,8 @@ export default function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userID, setUserID] = useState(null); // ✅ Store logged-in user ID
-  // const serverIP = "192.168.1.6";
-  const serverIP = "172.16.238.123";
+  const serverIP = "192.168.1.6";
+  // const serverIP = "172.16.238.123";
 
   useEffect(() => {
     const getUserID = async () => {
@@ -41,40 +41,40 @@ export default function ProductList() {
   }, []);
 
   const addToCart = async (inventory_id) => {
-      try {
-          if (!userID) {
-              Alert.alert("Error", "You must be logged in to add items to the cart.");
-              return;
-          }
+    try {
+        if (!userID) {
+            Alert.alert("Error", "You must be logged in to add items to the cart.");
+            return;
+        }
 
-          const cartItem = {
-              user_id: userID,
-              inventory_id: inventory_id
-          };
+        const cartItem = {
+            user_id: userID,
+            inventory_id: inventory_id
+        };
 
-          console.log("Cart Item Payload:", JSON.stringify(cartItem));
+        console.log("Cart Item Payload:", JSON.stringify(cartItem));
 
-          const response = await fetch(`http://${serverIP}/Pharmacy/ACAAPharmacy/api/cart`, {
-              method: "POST",
-              headers: {
-                  "Content-Type": "application/json", // ✅ Ensure JSON content type
-                  "Accept": "application/json"
-              },
-              body: JSON.stringify(cartItem) // ✅ Convert to JSON string
-          });
+        const response = await fetch(`http://${serverIP}/Pharmacy/ACAAPharmacy/api/cart`, {
+            method: "POST",
+            headers: {
+                "Content-Type": "application/json", // ✅ Ensure JSON content type
+                "Accept": "application/json"
+            },
+            body: JSON.stringify(cartItem) // ✅ Convert to JSON string
+        });
 
-          const data = await response.json();
-          console.log("API Response:", data);
+        const data = await response.json();
+        console.log("API Response:", data);
 
-          if (response.ok && data.success) {
-              Alert.alert("Success", data.message || "Product added to cart successfully.");
-          } else {
-              Alert.alert("Error", data.message || "Failed to add to cart.");
-          }
-      } catch (error) {
-          console.error("Error adding to cart:", error);
-          Alert.alert("Error", "Could not add product to cart.");
-      }
+        if (response.ok && data.success) {
+            Alert.alert("Success", data.message || "Product added to cart successfully.");
+        } else {
+            Alert.alert("Error", data.message || "Failed to add to cart.");
+        }
+    } catch (error) {
+        console.error("Error adding to cart:", error);
+        Alert.alert("Error", "Could not add product to cart.");
+    }
   };
 
   const renderProduct = ({ item }) => (
