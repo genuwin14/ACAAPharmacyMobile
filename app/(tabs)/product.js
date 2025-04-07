@@ -9,7 +9,7 @@ export default function ProductList() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [userID, setUserID] = useState(null); // ✅ Store logged-in user ID
-  const serverIP = "192.168.1.6";
+  const serverIP = "172.16.7.206";
   // const serverIP = "172.16.238.123";
 
   useEffect(() => {

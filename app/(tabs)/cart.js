@@ -8,7 +8,7 @@ import styles from "../styles/cartStyles"; // ✅ Import the styles
 export default function Cart() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const serverIP = "192.168.1.6";
+  const serverIP = "172.16.7.206";
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
 
