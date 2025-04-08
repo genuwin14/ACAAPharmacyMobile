@@ -6,9 +6,23 @@ const cartStyles = StyleSheet.create({
     alignItems: 'left',
     marginBottom: 20, // Space between the icon and the FlatList
   },
-  
   receivingText: {
     fontSize: 12, // Adjust the size of the text
+    color: "#000", // Color of the text
+    marginTop: 2,  // Space between the icon and the text
+    fontWeight: "bold", // Bold text for emphasis
+  },
+  statusHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    marginBottom: 10,
+  },
+  
+  icon: {
+    marginRight: 8,
+  },
+  receivingTextScreen: {
+    fontSize: 24, // Adjust the size of the text
     color: "#000", // Color of the text
     marginTop: 2,  // Space between the icon and the text
     fontWeight: "bold", // Bold text for emphasis
@@ -37,7 +51,7 @@ const cartStyles = StyleSheet.create({
   productName: { fontSize: 16, fontWeight: "bold" },
   productDetails: { fontSize: 14, color: "#555", marginBottom: 0, textAlign: "left" },
   productStock: { fontSize: 14, color: "#777", marginBottom: 0 },
-  productPrice: { fontSize: 16, fontWeight: "bold", color: "#007bff" },
+  productPrice: { fontSize: 16, color: "#007bff" },
   quantityContainer: {
     flexDirection: "row",
     alignItems: "center",
@@ -136,6 +150,85 @@ const cartStyles = StyleSheet.create({
     fontSize: 14,
     fontWeight: "bold",
   },
+  cartItemGroup: {
+    marginVertical: 10,
+    padding: 10,
+    margin: 10,
+    backgroundColor: '#f8f8f8',
+    borderRadius: 10,
+    elevation: 2,
+  },
+  statusAndTotal: {
+    borderTopWidth: 1,
+    borderTopColor: '#ccc',
+    marginTop: 10,
+    paddingTop: 5,
+    flexDirection: 'column', // Changed to column to display each item in a new line
+    justifyContent: 'flex-start', // Ensures items are aligned vertically at the start
+    paddingLeft: 10, // Optional: Add padding for better spacing
+    paddingRight: 10, // Optional: Add padding for better spacing
+  },
+
+  cartItemData: {
+    marginBottom: 10,
+  },
+  
+  productInfoData: {
+    flexDirection: 'row-reverse', // Places image on the right and text on the left
+    alignItems: 'center',
+    gap: 10,
+  },
+  
+  productImageData: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginLeft: 10,
+  },
+  
+  textContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    padding: 5,
+  },
+  
+  nameData: {
+    fontWeight: 'bold',
+    fontSize: 16,
+    marginBottom: 2,
+  },
+  
+  productData: {
+    color: '#000',
+    marginBottom: 2,
+  },
+
+  status: {
+    fontWeight: 'bold',
+    fontSize: 14,
+  },
+  
+  statusPending: {
+    color: 'red',
+    fontWeight: 'bold',
+  },
+  
+  statusReceived: {
+    color: 'green',
+    fontWeight: 'bold',
+  },
+
+  Data: {
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+
+  subData: {
+    fontSize: 14,
+    color: '#000',
+    fontWeight: 'normal',
+  },
+  
 });
 
 export default cartStyles;

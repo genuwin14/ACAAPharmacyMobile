@@ -2,15 +2,19 @@ import React, { useState, useCallback } from "react";
 import { View, Text, FlatList, Image, ActivityIndicator, Alert, TouchableOpacity } from "react-native";
 import AsyncStorage from "@react-native-async-storage/async-storage";
 import { useFocusEffect } from "@react-navigation/native";
+import { FontAwesome5 } from '@expo/vector-icons';
 import Icon from 'react-native-vector-icons/FontAwesome'; // You can change FontAwesome to another icon set like MaterialIcons, Ionicons, etc.
 import styles from "../styles/cartStyles"; // ✅ Import the styles
 
 export default function Cart() {
   const [cartItems, setCartItems] = useState([]);
   const [loading, setLoading] = useState(true);
-  const serverIP = "172.16.7.206";
+  const serverIP = "192.168.1.6";
   const [selectedProductIds, setSelectedProductIds] = useState([]);
   const [selectAll, setSelectAll] = useState(false);
+  const [currentScreen, setCurrentScreen] = useState("cart"); // State to manage the current screen
+  const [toReceiveItems, setToReceiveItems] = useState([]); // State for "To Receive" items
+  const [loadingToReceive, setLoadingToReceive] = useState(false); // Loading state for "To Receive"
 
   const fetchCartItems = async () => {
     try {
@@ -46,7 +50,104 @@ export default function Cart() {
     } finally {
       setLoading(false);
     }
-  };       
+  };
+
+  const formatDateTime = (dateString) => {
+    if (!dateString) return "N/A";
+  
+    const date = new Date(dateString);
+  
+    const optionsDate = { year: 'numeric', month: 'long', day: 'numeric' };
+    const optionsTime = { hour: 'numeric', minute: '2-digit', hour12: true };
+  
+    const formattedDate = date.toLocaleDateString('en-US', optionsDate);
+    const formattedTime = date.toLocaleTimeString('en-US', optionsTime);
+  
+    return `${formattedDate} at ${formattedTime}`;
+  };
+  
+  const fetchToReceiveItems = async () => {
+    setLoadingToReceive(true);
+    try {
+      const userData = await AsyncStorage.getItem("loggedInUser");
+      if (!userData) {
+        Alert.alert("Error", "You must be logged in to view your orders.");
+        return;
+      }
+  
+      const user = JSON.parse(userData);
+  
+      // Fetch checkout items for the logged-in user
+      const checkoutResponse = await fetch(`http://${serverIP}/Pharmacy/ACAAPharmacy/api/checkouts?user_id=${user.id}`);
+      const checkoutData = await checkoutResponse.json();
+  
+      if (Array.isArray(checkoutData.data)) {
+        const mergedItems = await Promise.all(
+          checkoutData.data
+            .filter((checkoutItem) => checkoutItem.user_id === user.id) // Only get the logged-in user's items
+            .map(async (checkoutItem) => {
+              // Fetch the detailed cart item based on cart_id
+              const cartResponse = await fetch(`http://${serverIP}/Pharmacy/ACAAPharmacy/api/cart/${checkoutItem.cart_id}`);
+              const cartData = await cartResponse.json();
+  
+              if (cartData.data) {
+                const cartItem = cartData.data;
+  
+                // Fetch the product details using inventory_id from products API
+                const productResponse = await fetch(`http://${serverIP}/Pharmacy/ACAAPharmacy/api/products`);
+                const productData = await productResponse.json();
+  
+                // Find the product matching inventory_id
+                const product = productData.data.find((p) => p.id === cartItem.inventory_id);
+  
+                return {
+                  ...checkoutItem,
+                  product_name: product?.name || "Unknown Product",
+                  product_price: product?.price || "0.00",
+                  product_details: product?.details || "No details available",
+                  quantity: cartItem?.quantity || 1,
+                  product_image: product?.image || "default.png",
+                  pickup_date: formatDateTime(checkoutItem.pickup_date),
+                  datetime_received: formatDateTime(checkoutItem.datetime_received),
+                };                
+              } else {
+                console.error(`Cart data not found for cart_id: ${checkoutItem.cart_id}`);
+                return null;
+              }
+            })
+        );
+  
+        // Filter out any null values in case cart data wasn't found
+        const validItems = mergedItems.filter(item => item !== null);
+  
+        // Group items by status + total_amount
+        const groupedMap = {};
+        validItems.forEach((item) => {
+          const key = `${item.status}_${item.total_amount}`;
+          if (!groupedMap[key]) {
+            groupedMap[key] = {
+              status: item.status,
+              pickup_date: item.pickup_date,
+              datetime_received: item.datetime_received,
+              total_amount: item.total_amount,
+              items: [],
+            };
+          }
+          groupedMap[key].items.push(item);
+        });
+  
+        const groupedArray = Object.values(groupedMap);
+        setToReceiveItems(groupedArray);
+      } else {
+        console.error("Invalid checkout data format");
+      }
+    } catch (error) {
+      console.error("Error fetching to receive items:", error);
+      Alert.alert("Error", "Failed to fetch items to receive.");
+    } finally {
+      setLoadingToReceive(false);
+    }
+  };    
 
   useFocusEffect(
     useCallback(() => {
@@ -146,6 +247,15 @@ export default function Cart() {
       Alert.alert("Error", "Could not remove item from cart.");
     }
   };
+
+  const handleNavigateToReceivePage = () => {
+    setCurrentScreen("toReceive"); // Switch to the "To Receive" screen
+    fetchToReceiveItems(); // Fetch "To Receive" items
+  };
+
+  const handleBackToCart = () => {
+    setCurrentScreen("cart"); // Switch back to the cart screen
+  };
   
   const renderCartItem = ({ item }) => {
     return (
@@ -198,6 +308,76 @@ export default function Cart() {
       </View>
     );
   };
+
+  const renderToReceiveItem = ({ item }) => (
+    <View style={styles.cartItemGroup}>
+      {item.items.map((product, index) => (
+        <View key={index} style={styles.cartItemData}>
+          <View style={styles.productInfoData}>
+            <Image
+              source={{ uri: `http://${serverIP}/Pharmacy/ACAAPharmacy/uploads/${product.product_image || 'default.png'}` }}
+              style={styles.productImage}
+              onError={(e) => {
+                e.target.src = `http://${serverIP}/Pharmacy/ACAAPharmacy/uploads/default.png`;
+              }}
+            />
+            <View style={styles.textContainer}>
+              <Text style={styles.nameData}>{product.product_name}</Text>
+              <Text style={styles.productData}>{product.product_details}</Text>
+              <Text style={styles.productPrice}>₱{product.product_price}</Text>
+              <Text style={styles.productData}>Qty: {product.quantity}</Text>
+            </View>
+          </View>
+        </View>
+      ))}
+      <View style={styles.statusAndTotal}>
+        <Text style={styles.status}>
+          Status: <Text style={item.status === 'Pending' ? styles.statusPending : styles.statusReceived}>
+            {item.status}
+          </Text>
+        </Text>
+
+        <Text style={styles.Data}>
+          Pickup Date: <Text style={styles.subData}>{item.pickup_date}</Text>
+        </Text>
+
+        <Text style={styles.Data}>
+          Received: <Text style={styles.subData}>{item.datetime_received}</Text>
+        </Text>
+
+        <Text style={styles.Data}>
+          Total: <Text style={styles.productPrice}>₱{item.total_amount}</Text>
+        </Text>
+      </View>
+    </View>
+  ); 
+
+  if (currentScreen === "toReceive") {
+    // Render the "To Receive" screen
+    return (
+      <View style={styles.container}>
+        <TouchableOpacity onPress={handleBackToCart} style={styles.backButton}>
+          <Text><Icon name="arrow-left" size={25} color="#000" /> Back</Text>
+          <View style={styles.hrLine} />
+        </TouchableOpacity>
+        <View style={styles.statusHeader}>
+          <FontAwesome5 name="truck" size={20} color="#333" style={styles.icon} />
+          <Text style={styles.receivingTextScreen}>Ordered Item Status</Text>
+        </View>
+        {loadingToReceive ? (
+          <ActivityIndicator size="large" color="#007bff" />
+        ) : toReceiveItems.length === 0 ? (
+          <Text style={styles.emptyCartText}>No items to receive.</Text>
+        ) : (
+          <FlatList
+            data={toReceiveItems}
+            keyExtractor={(item, index) => item.id ? item.id.toString() : index.toString()}
+            renderItem={renderToReceiveItem}
+          />
+        )}
+      </View>
+    );
+  }
 
   const handleCheckout = async () => {
     try {
@@ -295,12 +475,11 @@ export default function Cart() {
 
   return (
     <View style={styles.container}>
-      {/* Add icon at the top */}
-      <View style={styles.iconContainer}>
+      <TouchableOpacity style={styles.iconContainer} onPress={handleNavigateToReceivePage}>
         <Icon name="car" size={25} color="#000" marginLeft="12" />
-        <Text style={styles.receivingText}>To receive</Text>
+        <Text style={styles.receivingText}>To Receive</Text>
         <View style={styles.hrLine} />
-      </View>
+      </TouchableOpacity>
 
       {loading ? (
         <ActivityIndicator size="large" color="#007bff" />
